@@ -39,3 +39,9 @@ fabric.properties
 # Maven
 log/
 target/
+
+# macOS
+.DS_Store
+
+# Local build artifacts
+E:/
