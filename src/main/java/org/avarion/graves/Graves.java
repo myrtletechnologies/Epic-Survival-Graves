@@ -2,7 +2,6 @@ package org.avarion.graves;
 
 import com.google.common.base.Charsets;
 import org.avarion.graves.command.GravesCommand;
-import org.avarion.graves.command.GraveyardsCommand;
 import org.avarion.graves.compatibility.Compatibility;
 import org.avarion.graves.compatibility.CompatibilityBlockData;
 import org.avarion.graves.listener.*;
@@ -53,7 +52,6 @@ public class Graves extends JavaPlugin {
     private RecipeManager recipeManager;
     private LocationManager locationManager;
     private GraveManager graveManager;
-    private GraveyardManager graveyardManager;
     private Compatibility compatibility;
     private FileConfiguration fileConfiguration;
 
@@ -85,7 +83,7 @@ public class Graves extends JavaPlugin {
         entityManager = new EntityManager(this);
         locationManager = new LocationManager(this);
         graveManager = new GraveManager(this);
-        graveyardManager = new GraveyardManager(this);
+        // Graveyard functionality removed in build-3
 
         registerMetrics();
         registerCommands();
@@ -112,10 +110,7 @@ public class Graves extends JavaPlugin {
             graveManager = null;
         }
 
-        if (graveyardManager != null) {
-            graveyardManager.unload();
-            graveyardManager = null;
-        }
+        // Graveyard functionality removed in build-3
 
         if (integrationManager != null) {
             integrationManager.unload();
@@ -267,7 +262,6 @@ public class Graves extends JavaPlugin {
 
     private void registerCommands() {
         PluginCommand gravesPluginCommand = getCommand("graves");
-        PluginCommand graveyardsPluginCommand = getCommand("graveyards");
 
         if (gravesPluginCommand != null) {
             GravesCommand gravesCommand = new GravesCommand(this);
@@ -276,12 +270,7 @@ public class Graves extends JavaPlugin {
             gravesPluginCommand.setTabCompleter(gravesCommand);
         }
 
-        if (graveyardsPluginCommand != null) {
-            GraveyardsCommand graveyardsCommand = new GraveyardsCommand(this);
-
-            graveyardsPluginCommand.setExecutor(graveyardsCommand);
-            graveyardsPluginCommand.setTabCompleter(graveyardsCommand);
-        }
+        // Graveyard command removed in build-3
     }
 
     public void debugMessage(String string, int level) {
@@ -459,9 +448,7 @@ public class Graves extends JavaPlugin {
         return graveManager;
     }
 
-    public GraveyardManager getGraveyardManager() {
-        return graveyardManager;
-    }
+    // Graveyard functionality removed in build-3
 
     public HologramManager getHologramManager() {
         return hologramManager;

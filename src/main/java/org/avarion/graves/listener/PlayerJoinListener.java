@@ -36,13 +36,11 @@ public class PlayerJoinListener implements Listener {
                                        + ChatColor.DARK_GRAY
                                        + " » "
                                        + ChatColor.RESET
-                                       + "Outdated version detected "
-                                       + plugin.getVersion()
-                                       + ", latest version is "
+                                       + "New upstream version available: "
                                        + latestVersion
-                                       + ", https://www.spigotmc.org/resources/"
-                                       + plugin.getSpigotID()
-                                       + "/");
+                                       + " (current: "
+                                       + plugin.getVersion()
+                                       + "), https://github.com/AvarionMC/graves/releases");
                 }
             });
         }

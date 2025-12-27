@@ -22,9 +22,7 @@ public class PlayerQuitListener implements Listener {
 
         plugin.getLocationManager().removeLastSolidLocation(player);
 
-        if (plugin.getGraveyardManager().isModifyingGraveyard(player)) {
-            plugin.getGraveyardManager().stopModifyingGraveyard(player);
-        }
+        // Graveyard functionality removed in build-3
     }
 
 }

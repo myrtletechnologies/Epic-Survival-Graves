@@ -24,45 +24,7 @@ public final class ItemStackManager extends EntityDataManager {
         this.plugin = plugin;
     }
 
-    public @NotNull ItemStack getGraveObituary(Grave grave) {
-        ItemStack itemStack = new ItemStack(Material.WRITTEN_BOOK, 1);
-        BookMeta bookMeta = (BookMeta) itemStack.getItemMeta();
-
-        if (bookMeta != null) {
-            List<String> lineList = new ArrayList<>();
-            List<String> loreList = new ArrayList<>();
-
-            for (String lore : plugin.getConfigStringList("obituary.line", grave)) {
-                lineList.add(StringUtil.parseString(lore, grave.getLocationDeath(), grave, plugin));
-            }
-
-            for (String string : plugin.getConfigStringList("obituary.lore", grave)) {
-                loreList.add(ChatColor.GRAY + StringUtil.parseString(string, grave.getLocationDeath(), grave, plugin));
-            }
-
-            int customModelData = plugin.getConfigInt("obituary.model-data", grave, -1);
-
-            if (customModelData > -1) {
-                bookMeta.setCustomModelData(customModelData);
-            }
-
-            if (plugin.getConfigBool("obituary.glow", grave)) {
-                bookMeta.addEnchant(Enchantment.DURABILITY, 1, true);
-
-                bookMeta.addItemFlags(ItemFlag.HIDE_ENCHANTS);
-            }
-
-            bookMeta.setGeneration(null);
-            bookMeta.setPages(String.join("\n", lineList));
-            bookMeta.setLore(loreList);
-            bookMeta.setTitle(ChatColor.WHITE
-                              + StringUtil.parseString(plugin.getConfigString("obituary.title", grave), grave, plugin));
-            bookMeta.setAuthor(StringUtil.parseString(plugin.getConfigString("obituary.author", grave), grave, plugin));
-            itemStack.setItemMeta(bookMeta);
-        }
-
-        return itemStack;
-    }
+    // Obituary functionality removed in build-3
 
     public @NotNull ItemStack getGraveHead(Grave grave) {
         ItemStack itemStack = plugin.getCompatibility().getSkullItemStack(grave, plugin);

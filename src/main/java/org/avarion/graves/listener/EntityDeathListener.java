@@ -6,7 +6,6 @@ import org.avarion.graves.event.GraveBlockPlaceEvent;
 import org.avarion.graves.event.GraveCreateEvent;
 import org.avarion.graves.manager.CacheManager;
 import org.avarion.graves.type.Grave;
-import org.avarion.graves.type.Graveyard;
 import org.avarion.graves.util.*;
 import org.bukkit.Location;
 import org.bukkit.block.BlockFace;
@@ -86,9 +85,7 @@ public class EntityDeathListener implements EventExecutor {
         if (livingEntity instanceof Player) {
             Player player = (Player) livingEntity;
 
-            if (plugin.getGraveyardManager().isModifyingGraveyard(player)) {
-                plugin.getGraveyardManager().stopModifyingGraveyard(player);
-            }
+            // Graveyard functionality removed in build-3
 
             if (!player.hasPermission("graves.place")) {
                 plugin.debugMessage("Grave not created for "
@@ -386,45 +383,10 @@ public class EntityDeathListener implements EventExecutor {
                 grave.getLocationDeath().setYaw(grave.getYaw());
                 grave.getLocationDeath().setPitch(grave.getPitch());
 
-                // Graveyard
-                if (plugin.getConfigBool("graveyard.enabled", grave)) {
-                    Graveyard graveyard = plugin.getGraveyardManager()
-                                                .getClosestGraveyard(grave.getLocationDeath(), livingEntity);
+                // Graveyard functionality removed in build-3
+                locationMap.put(grave.getLocationDeath(), BlockData.BlockType.DEATH);
 
-                    if (graveyard != null) {
-                        Map<Location, BlockFace> graveyardFreeSpaces = plugin.getGraveyardManager()
-                                                                             .getGraveyardFreeSpaces(graveyard);
-
-                        if (!graveyardFreeSpaces.isEmpty()) {
-                            if (plugin.getConfigBool("graveyard.death", grave)) {
-                                locationMap.put(grave.getLocationDeath(), BlockData.BlockType.DEATH);
-                            }
-
-                            Map.Entry<Location, BlockFace> entry = graveyardFreeSpaces.entrySet().iterator().next();
-
-                            entry.getKey()
-                                 .setYaw(plugin.getConfig().getBoolean("settings.graveyard.facing")
-                                         ? BlockFaceUtil.getBlockFaceYaw(entry.getValue())
-                                         : grave.getYaw());
-                            entry.getKey().setPitch(grave.getPitch());
-                            locationMap.put(entry.getKey(), BlockData.BlockType.GRAVEYARD);
-                        }
-                        else {
-                            locationMap.put(grave.getLocationDeath(), BlockData.BlockType.DEATH);
-                        }
-                    }
-                    else {
-                        locationMap.put(grave.getLocationDeath(), BlockData.BlockType.DEATH);
-                    }
-                }
-                else {
-                    locationMap.put(grave.getLocationDeath(), BlockData.BlockType.DEATH);
-                }
-
-                // Obituary
-                if (plugin.getConfigBool("obituary.enabled", grave)) {
-                    graveItemStackList.add(plugin.getItemStackManager().getGraveObituary(grave));
-                }
+                // Obituary functionality removed in build-3
 
                 // Skull
                 if (plugin.getConfigBool("head.enabled", grave)
