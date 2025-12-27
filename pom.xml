@@ -6,7 +6,7 @@
 
     <groupId>org.avarion</groupId>
     <artifactId>graves</artifactId>
-    <name>ecc-graves-custom</name>
+    <name>ecc-graves</name>
     <description>Full featured lightweight death chest plugin.</description>
     <version>${revision}</version>
 
@@ -22,7 +22,7 @@
     </developers>
 
     <properties>
-        <revision>4.9.11-custom-build-1</revision>
+        <revision>4.9.11</revision>
         <java.version>17</java.version>
         <maven.compiler.source>${java.version}</maven.compiler.source>
         <maven.compiler.target>${java.version}</maven.compiler.target>
