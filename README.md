@@ -1,12 +1,34 @@
-![Graves logo](images/graves_logo.png)
+# Epic Survival Graves - Custom Fork
 
-# Acknowledgement
+**⚠️ This is a private customized fork for internal server use only.**
 
-This plugin was made by Ranull, and imported via his [GitLab repository](https://gitlab.com/ranull/minecraft/graves). As
-it wasn't updated in nearly 2 years, and no official source for a minecraft 1.20.2 and higher version, I decided to fork
-it and keep it alive (😁 pun intended!).
+This fork is maintained exclusively for use on our Minecraft server and is **not intended for public use**. We provide no support, will not accept pull requests, and make no guarantees about maintenance beyond our own needs.
 
-Original code was released under GPLv3. So everything will be kept under the same license here.
+**Looking for a Graves plugin?** Please use the actively maintained [AvarionMC/graves](https://github.com/AvarionMC/graves) project instead, unless you specifically need the exact customizations made for our server.
+
+## Attribution
+
+This is a fork of [AvarionMC/graves](https://github.com/AvarionMC/graves), maintained by Steven 'KaReL' Van Ingelgem, which itself is a fork of the original plugin by Ranull from his [GitLab repository](https://gitlab.com/ranull/minecraft/graves).
+
+All code is released under GPLv3, same as the original projects.
+
+## Custom Modifications
+
+This fork includes the following changes from the upstream AvarionMC version:
+
+- **Removed:** Obituary functionality
+- **Removed:** Graveyard system (commands, permissions, management)
+- **Removed:** Right-click to open graves (graves must be broken to access items)
+- **Modified:** Version check notifications (shows upstream updates available, but acknowledges custom build)
+- **Updated:** Based on v4.9.11 with dependency updates and bug fixes
+
+## Disclaimer
+
+For any plugin-related concerns, feature requests, or support:
+- Create your own fork, or
+- Direct your inquiries to the [upstream AvarionMC project](https://github.com/AvarionMC/graves)
+
+We will not provide support or manage contributions for this repository.
 
 # What is it?
 
@@ -125,8 +147,10 @@ mvn clean install -Dtest.server.path=/path/to/your/server/plugins
 
 By default, the plugin will be copied to `target/test-server`.
 
-## Links
+## Upstream Project Links
 
+For the official, actively maintained version:
+
+* **GitHub**: <https://github.com/AvarionMC/graves>
 * **Spigot**: <https://www.spigotmc.org/resources/graves.116202/>
 * **bStats**: <https://bstats.org/plugin/bukkit/AvarionGraves/21607>
-* **GitHub**: <https://github.com/AvarionMC/graves>
