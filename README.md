@@ -46,7 +46,6 @@ and more! While still being lightweight and efficient.
 * Zombies
 * Corpses
 * Models
-* Obituary
 * Compass
 * Head Drops
 * Holograms
@@ -82,17 +81,6 @@ and more! While still being lightweight and efficient.
 * MiniMessage
 * SimpleClaimSystem
 
-## Screenshots
-
-![Screenshot 1](images/screenshot_1.png)
-![Screenshot 2](images/screenshot_2.png)
-
-## Videos
-
-[![Graves plugin](https://img.youtube.com/vi/mq8aoZE6Jl0/0.jpg)](https://www.youtube.com/watch?v=mq8aoZE6Jl0)
-
-**Video by:** _ServerMiner_
-
 ## Commands
 
 | Command                                           | what does it do?             |
@@ -118,24 +106,6 @@ and more! While still being lightweight and efficient.
     graves.givetoken (OP)
     graves.bypass (OP)
     graves.reload (OP)
-
-## Bug Reports
-
-If you find bugs please report them [here](https://github.com/svaningelgem/graves/issues).
-
-## Usage
-
-![Server usage](https://bstats.org/signatures/bukkit/AvarionGraves.svg)
-
-## Contributing
-
-### How to build
-
-You can build the project using Maven:
-
-```bash
-mvn clean install
-```
 
 ### Testing on a local server
 
