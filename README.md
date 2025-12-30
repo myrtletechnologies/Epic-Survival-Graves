@@ -1,4 +1,4 @@
-# Epic Survival Graves - Custom Fork
+# Graves - Epic Survival Fork
 
 **⚠️ This is an unofficial, custom build of AvarionMC/graves.**
 
