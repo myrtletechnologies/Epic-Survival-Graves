@@ -1,18 +1,20 @@
 # Epic Survival Graves - Custom Fork
 
-**⚠️ This is a private EnderCartCraft-only build.**
+**⚠️ This is an unofficial, custom build of AvarionMC/graves.**
 
-This fork exists solely to run the EnderCartCraft survival world. It is **not intended for public use**, we provide zero support, and we decline all pull requests.
+This fork exists solely to run the EnderCartCraft survival world. It is not intended to replace or provide any other server with an alternative to the original project, we provide zero support, and we will decline / not monitor any pull requests.
+
+Only use our version here, if you happen to desire our exact stripped down version of the original plugin. We removed most of the original plugin's cool features and capabilities, for our own nice use-case.
 
 **Looking for a Graves plugin?** Please use the actively maintained [AvarionMC/graves](https://github.com/AvarionMC/graves) project instead, unless you specifically need the exact customizations made for our server.
 
 ## Attribution
 
-This is a fork of [AvarionMC/graves](https://github.com/AvarionMC/graves), maintained by Steven 'KaReL' Van Ingelgem, which itself is a fork of the original plugin by Ranull from his [GitLab repository](https://gitlab.com/ranull/minecraft/graves).
+This is a fork of [AvarionMC/graves](https://github.com/AvarionMC/graves), maintained by Steven Van Ingelgem, which itself is a fork of the original plugin by Ranull from his [GitLab repository](https://gitlab.com/ranull/minecraft/graves).
 
 All code is released under GPLv3, same as the original projects.
 
-## EnderCartCraft direction (build-5)
+## EnderCartCraft direction (build-6)
 
 Our stripped fork keeps only the behaviors EnderCartCraft needs:
 
@@ -60,16 +62,6 @@ There are **no** YAML files, commands, or toggles left. If you need a different 
 | Permission      | Description                                                |
 |-----------------|------------------------------------------------------------|
 | `graves.bypass` | Allows bypassing grave protection timers when looting.     |
-
-### Testing on a local server
-
-You can automatically copy the built plugin to your local server's plugins directory by specifying the `test.server.path` property:
-
-```bash
-mvn clean install -Dtest.server.path=/path/to/your/server/plugins
-```
-
-By default, the plugin will be copied to `target/test-server`.
 
 ## Upstream Project Links
 
