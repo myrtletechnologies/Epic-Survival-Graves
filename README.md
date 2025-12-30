@@ -4,7 +4,7 @@
 
 This fork exists solely to run the EnderCartCraft survival world. It is not intended to replace or provide any other server with an alternative to the original project, we provide zero support, and we will decline / not monitor any pull requests.
 
-Only use our version here, if you happen to desire our exact stripped down version of the original plugin. We removed most of the original plugin's cool features and capabilities, for our own nice use-case.
+Only use our version here, if you happen to desire our exact stripped down version of the original plugin. We removed most of the original plugin's cool features and capabilities, for our own niche use-case.
 
 **Looking for a Graves plugin?** Please use the actively maintained [AvarionMC/graves](https://github.com/AvarionMC/graves) project instead, unless you specifically need the exact customizations made for our server.
 
