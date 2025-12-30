@@ -1,28 +1,21 @@
 package org.avarion.graves.manager;
 
 import org.avarion.graves.Graves;
+import org.avarion.graves.config.Settings;
 import org.avarion.graves.data.EntityData;
 import org.avarion.graves.type.Grave;
 import org.avarion.graves.util.*;
 import org.bukkit.*;
-import org.bukkit.block.BlockFace;
 import org.bukkit.command.CommandSender;
-import org.bukkit.enchantments.Enchantment;
 import org.bukkit.entity.*;
-import org.bukkit.event.server.ServerCommandEvent;
 import org.bukkit.inventory.EntityEquipment;
 import org.bukkit.inventory.EquipmentSlot;
-import org.bukkit.inventory.ItemFlag;
 import org.bukkit.inventory.ItemStack;
-import org.bukkit.inventory.meta.CompassMeta;
-import org.bukkit.inventory.meta.ItemMeta;
 import org.bukkit.metadata.MetadataValue;
 import org.bukkit.persistence.PersistentDataType;
-import org.bukkit.util.NumberConversions;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.lang.reflect.Method;
 import java.util.*;
 
 public final class EntityManager extends EntityDataManager {
@@ -35,69 +28,7 @@ public final class EntityManager extends EntityDataManager {
         this.plugin = plugin;
     }
 
-    public void swingMainHand(@NotNull Player player) {
-        player.swingMainHand();
-    }
 
-    public @NotNull ItemStack createGraveCompass(Player player, Location location, Grave grave) {
-        Material material = Material.COMPASS;
-
-        if (plugin.getConfigBool("compass.recovery", grave)) {
-            try {
-                material = Material.valueOf("RECOVERY_COMPASS");
-            }
-            catch (IllegalArgumentException ignored) {
-            }
-        }
-
-        ItemStack itemStack = new ItemStack(material);
-        ItemMeta itemMeta = itemStack.getItemMeta();
-
-        if (itemMeta != null) {
-            if (itemMeta instanceof CompassMeta compassMeta) {
-
-                compassMeta.setLodestoneTracked(false);
-                compassMeta.setLodestone(location);
-            }
-            else if (itemStack.getType().name().equals("RECOVERY_COMPASS")) {
-                try {
-                    // Not known in 1.18 yet...
-                    Method setLastDeathLocationMethod = player.getClass()
-                                                              .getMethod("setLastDeathLocation", Location.class);
-                    setLastDeathLocationMethod.invoke(player, location);
-                }
-                catch (Exception ignored) {
-                }
-            }
-
-            List<String> loreList = new ArrayList<>();
-            int customModelData = plugin.getConfigInt("compass.model-data", grave, -1);
-
-            if (customModelData > -1) {
-                itemMeta.setCustomModelData(customModelData);
-            }
-
-            if (plugin.getConfigBool("compass.glow", grave)) {
-                itemMeta.addEnchant(Enchantment.DURABILITY, 1, true);
-                itemMeta.addItemFlags(ItemFlag.HIDE_ENCHANTS);
-            }
-
-            itemMeta.setDisplayName(ChatColor.WHITE
-                                    + StringUtil.parseString(plugin.getConfigString("compass.name", grave), grave, plugin));
-            itemMeta.getPersistentDataContainer()
-                    .set(new NamespacedKey(plugin, "graveUUID"), PersistentDataType.STRING, grave.getUUID().toString());
-
-            for (String string : plugin.getConfigStringList("compass.lore", grave)) {
-                loreList.add(ChatColor.GRAY + StringUtil.parseString(string, location, grave, plugin));
-            }
-
-            itemMeta.setLore(loreList);
-            itemStack.setItemMeta(itemMeta);
-        }
-
-        return itemStack;
-
-    }
 
     public @NotNull Map<ItemStack, UUID> getCompassesFromInventory(@NotNull HumanEntity player) {
         Map<ItemStack, UUID> itemStackUUIDMap = new HashMap<>();
@@ -124,105 +55,48 @@ public final class EntityManager extends EntityDataManager {
 
         return null;
     }
+    private Sound resolveSound(String key) {
+        if (key == null || key.isEmpty()) {
+            return null;
+        }
 
-    public void teleportEntity(Entity entity, Location location, Grave grave) {
-        if (canTeleport(entity, location)) {
-            location = LocationUtil.roundLocation(location);
-            BlockFace blockFace = BlockFaceUtil.getYawBlockFace(grave.getYaw());
-            Location locationTeleport = location.clone()
-                                                .getBlock()
-                                                .getRelative(blockFace)
-                                                .getRelative(blockFace)
-                                                .getLocation()
-                                                .add(0.5, 0, 0.5);
-
-            if (plugin.getLocationManager().isLocationSafePlayer(locationTeleport)) {
-                locationTeleport.setYaw(BlockFaceUtil.getBlockFaceYaw(blockFace.getOppositeFace()));
-                locationTeleport.setPitch(20);
-            }
-            else {
-                locationTeleport = plugin.getLocationManager()
-                                         .getSafeTeleportLocation(entity, location.add(0, 1, 0), grave, plugin);
-
-                if (locationTeleport != null) {
-                    locationTeleport.add(0.5, 0, 0.5);
-                    locationTeleport.setYaw(BlockFaceUtil.getBlockFaceYaw(blockFace));
-                    locationTeleport.setPitch(90);
+        return switch (key) {
+            case "sound.open" -> Settings.SOUND_OPEN;
+            case "sound.close" -> Settings.SOUND_CLOSE;
+            case "sound.loot" -> Settings.SOUND_LOOT;
+            case "sound.protection" -> Settings.SOUND_PROTECTION;
+            case "sound.experience" -> Settings.SOUND_EXPERIENCE;
+            default -> {
+                try {
+                    yield Sound.valueOf(key.toUpperCase(Locale.ROOT));
+                }
+                catch (IllegalArgumentException exception) {
+                    plugin.debugMessage(key.toUpperCase(Locale.ROOT) + " is not a Sound ENUM", 1);
+                    yield null;
                 }
             }
-
-            if (locationTeleport != null && locationTeleport.getWorld() != null) {
-                if (entity instanceof Player player) {
-
-                    if (plugin.getIntegrationManager().hasVault()) {
-                        double teleportCost = getTeleportCost(entity.getLocation(), locationTeleport, grave);
-
-                        if (plugin.getIntegrationManager().getVault().hasBalance(player, teleportCost)
-                            && plugin.getIntegrationManager().getVault().withdrawBalance(player, teleportCost)) {
-                            player.teleport(locationTeleport);
-                            plugin.getEntityManager().sendMessage("message.teleport", player, locationTeleport, grave);
-                            plugin.getEntityManager()
-                                  .playPlayerSound("sound.teleport", player, locationTeleport, grave);
-                        }
-                        else {
-                            plugin.getEntityManager()
-                                  .sendMessage("message.no-money", player, player.getLocation(), grave);
-                        }
-                    }
-                    else {
-                        player.teleport(locationTeleport);
-                    }
-                }
-                else {
-                    entity.teleport(locationTeleport);
-                }
-            }
-            else {
-                plugin.getEntityManager().sendMessage("message.teleport-failure", entity, location, grave);
-            }
-        }
-        else {
-            plugin.getEntityManager().sendMessage("message.region-teleport-deny", entity, location, grave);
-        }
+        };
     }
 
-    public double getTeleportCost(Location location1, Location location2, Grave grave) {
-        double cost = plugin.getConfigDbl("teleport.cost", grave);
-
-        if (plugin.getConfig("teleport.cost", grave).isString("teleport.cost")) {
-            String costString = StringUtil.parseString(plugin.getConfigString("teleport.cost", grave), location2, grave, plugin);
-
-            try {
-                cost = Double.parseDouble(costString);
-            }
-            catch (NumberFormatException ignored) {
-                plugin.debugMessage(costString + " cost is not a double", 1);
-            }
+    private @Nullable String resolveMessage(String key) {
+        if (key == null || key.isEmpty()) {
+            return null;
         }
 
-        double costDifferentWorld = plugin.getConfigDbl("teleport.cost-different-world", grave);
-
-        if (plugin.getConfigBool("teleport.cost-distance-increase", grave)) {
-            double distance = Math.sqrt(NumberConversions.square(location1.getBlockX() - location2.getBlockX())
-                                        + NumberConversions.square(location1.getBlockZ() - location2.getBlockZ()));
-            cost = Math.round(cost * (distance / 16));
-        }
-
-        if (location1.getWorld() != null
-            && location2.getWorld() != null
-            && costDifferentWorld > 0
-            && !location1.getWorld().getName().equals(location2.getWorld().getName())) {
-            cost += costDifferentWorld;
-        }
-
-        return cost;
+        return switch (key) {
+            case "message.block" -> Settings.Messages.GRAVE_CREATED;
+            case "message.timeout" -> Settings.Messages.GRAVE_TIMEOUT;
+            case "message.failure-keep-inventory" -> Settings.Messages.FAILURE_KEEP;
+            case "message.failure" -> Settings.Messages.FAILURE;
+            case "message.permission-denied" -> Settings.Messages.PERMISSION_DENIED;
+            case "message.protection" -> Settings.Messages.PROTECTION;
+            case "message.distance" -> Settings.Messages.DISTANCE;
+            case "message.distance-world" -> Settings.Messages.DISTANCE_WORLD;
+            case "message.empty" -> Settings.Messages.EMPTY;
+            default -> "";
+        };
     }
 
-    public boolean canTeleport(Entity entity, Location location) {
-        return !plugin.getIntegrationManager().hasWorldGuard() || plugin.getIntegrationManager()
-                                                                        .getWorldGuard()
-                                                                        .canTeleport(entity, location);
-    }
 
     public void playWorldSound(String string, @NotNull Player player) {
         playWorldSound(string, player.getLocation(), null);
@@ -233,491 +107,97 @@ public final class EntityManager extends EntityDataManager {
     }
 
     public void playWorldSound(String string, Location location, Grave grave) {
-        playWorldSound(string, location, grave != null ? grave.getOwnerType() : null, grave != null
-                                                                                      ? grave.getPermissionList()
-                                                                                      : null, 1, 1);
+        playWorldSound(string, location, 1, 1);
     }
 
-    public void playWorldSound(String string, @NotNull Location location, EntityType entityType, List<String> permissionList, float volume, float pitch) {
-        if (location.getWorld() != null) {
-            string = plugin.getConfigString(string, entityType, permissionList);
-
-            if (string != null && !string.isEmpty()) {
-                try {
-                    location.getWorld().playSound(location, Sound.valueOf(string.toUpperCase()), volume, pitch);
-                }
-                catch (IllegalArgumentException exception) {
-                    plugin.debugMessage(string.toUpperCase() + " is not a Sound ENUM", 1);
-                }
-            }
+    public void playWorldSound(String string, @NotNull Location location, float volume, float pitch) {
+        if (location.getWorld() == null) {
+            return;
         }
+
+        Sound sound = resolveSound(string);
+        if (sound == null) {
+            return;
+        }
+
+        location.getWorld().playSound(location, sound, volume, pitch);
     }
 
     public void playPlayerSound(String string, Entity entity, @NotNull Grave grave) {
-        playPlayerSound(string, entity, entity.getLocation(), grave.getPermissionList(), 1, 1);
+        playPlayerSound(string, entity, entity.getLocation(), 1, 1);
     }
 
     public void playPlayerSound(String string, Entity entity, Location location, @NotNull Grave grave) {
-        playPlayerSound(string, entity, location, grave.getPermissionList(), 1, 1);
+        playPlayerSound(string, entity, location, 1, 1);
     }
 
-    public void playPlayerSound(String string, Entity entity, List<String> permissionList) {
-        playPlayerSound(string, entity, entity.getLocation(), permissionList, 1, 1);
+    public void playPlayerSound(String string, Entity entity, Location location) {
+        playPlayerSound(string, entity, location, 1, 1);
     }
 
-    public void playPlayerSound(String string, Entity entity, Location location, List<String> permissionList) {
-        playPlayerSound(string, entity, location, permissionList, 1, 1);
-    }
-
-    public void playPlayerSound(String string, Entity entity, Location location, List<String> permissionList, float volume, float pitch) {
-        if (entity instanceof Player player) {
-            string = plugin.getConfigString(string, entity, permissionList);
-
-            if (string != null && !string.isEmpty()) {
-                try {
-                    player.playSound(location, Sound.valueOf(string.toUpperCase()), volume, pitch);
-                }
-                catch (IllegalArgumentException exception) {
-                    plugin.debugMessage(string.toUpperCase() + " is not a Sound ENUM", 1);
-                }
-            }
+    public void playPlayerSound(String string, Entity entity, Location location, float volume, float pitch) {
+        if (!(entity instanceof Player player) || location.getWorld() == null) {
+            return;
         }
+
+        Sound sound = resolveSound(string);
+        if (sound == null) {
+            return;
+        }
+
+        player.playSound(location, sound, volume, pitch);
     }
 
     public void sendMessage(String string, CommandSender commandSender) {
         if (commandSender instanceof Player player) {
-
-            sendMessage(string, player, player.getLocation(), null, plugin.getPermissionList(player));
+            sendMessage(string, player, player.getLocation(), null);
         }
     }
 
     public void sendMessage(String string, Entity entity) {
-        sendMessage(string, entity, entity.getLocation(), null, plugin.getPermissionList(entity));
-    }
-
-    public void sendMessage(String string, Entity entity, List<String> permissionList) {
-        sendMessage(string, entity, entity.getLocation(), null, permissionList);
-    }
-
-    public void sendMessage(String string, Entity entity, Location location, List<String> permissionList) {
-        sendMessage(string, entity, location, null, permissionList);
+        sendMessage(string, entity, entity.getLocation(), null);
     }
 
     public void sendMessage(String string, Entity entity, Location location, Grave grave) {
-        sendMessage(string, entity, location, grave, null);
+        sendMessage(string, entity, getEntityName(entity), location, grave);
     }
 
-    public void sendMessage(String string, Entity entity, String name, Location location, List<String> permissionList) {
-        sendMessage(string, entity, name, location, null, permissionList);
-    }
-
-    private void sendMessage(String string, Entity entity, Location location, Grave grave, List<String> permissionList) {
-        sendMessage(string, entity, getEntityName(entity), location, grave, permissionList);
-    }
-
-    private void sendMessage(String string, Entity entity, String name, Location location, Grave grave, List<String> permissionList) {
-        if (entity instanceof Player player) {
-
-            if (grave != null) {
-                string = plugin.getConfigString(string, grave);
-            }
-            else {
-                string = plugin.getConfigString(string, entity.getType(), permissionList);
-            }
-
-            if (string == null) {
-                return;
-            }
-
-            string = string.replaceAll("\\s+$", "");
-            if (string.isEmpty()) {
-                return;
-            }
-
-            String prefix = plugin.getConfigString("message.prefix", entity.getType(), permissionList);
-
-            if (prefix != null && !prefix.isEmpty()) {
-                string = prefix + string;
-            }
-
-            player.sendMessage(StringUtil.parseString(string, entity, name, location, grave, plugin));
+    public void sendMessage(String string, Entity entity, String name, Location location, Grave grave) {
+        if (!(entity instanceof Player player)) {
+            return;
         }
-    }
 
-    public void runCommands(String string, Entity entity, Location location, Grave grave) {
-        runCommands(string, entity, null, location, grave);
-    }
-
-    public void runCommands(String string, String name, Location location, Grave grave) {
-        runCommands(string, null, name, location, grave);
-    }
-
-    private void runCommands(String string, Entity entity, String name, Location location, Grave grave) {
-        for (String command : plugin.getConfigStringList(string, grave)) {
-            if (command != null && !command.isEmpty()) {
-                runConsoleCommand(StringUtil.parseString(command, entity, name, location, grave, plugin));
-            }
+        String template = resolveMessage(string);
+        if (template == null || template.isEmpty()) {
+            return;
         }
+
+        String decorated = Settings.Messages.PREFIX + template;
+        player.sendMessage(StringUtil.parseString(decorated, entity, name, location, grave, plugin));
     }
 
-    private void runConsoleCommand(String string) {
-        if (string != null && !string.isEmpty()) {
-            ServerCommandEvent serverCommandEvent = new ServerCommandEvent(plugin.getServer()
-                                                                                 .getConsoleSender(), string);
 
-            plugin.getServer().getPluginManager().callEvent(serverCommandEvent);
-
-            if (!serverCommandEvent.isCancelled()) {
-                plugin.getServer()
-                      .getScheduler()
-                      .callSyncMethod(plugin, () -> plugin.getServer()
-                                                          .dispatchCommand(serverCommandEvent.getSender(), serverCommandEvent.getCommand()));
-                plugin.debugMessage("Running console command " + string, 1);
-            }
-        }
-    }
-
-    public boolean runFunction(Entity entity, String function) {
-        return runFunction(entity, function, null);
-    }
-
-    public boolean runFunction(Entity entity, @NotNull String function, Grave grave) {
-        switch (function.toLowerCase()) {
-            case "list" -> {
-                plugin.getGUIManager().openGraveList(entity);
-
-                return true;
-            }
-            case "menu" -> {
-                plugin.getGUIManager().openGraveMenu(entity, grave);
-
-                return true;
-            }
-            case "teleport", "teleportation" -> {
-                if (plugin.getConfigBool("teleport.enabled", grave)
-                    && (EntityUtil.hasPermission(entity, "graves.teleport")
-                        || EntityUtil.hasPermission(entity, "graves.bypass"))) {
-                    plugin.getEntityManager()
-                          .teleportEntity(entity, plugin.getGraveManager()
-                                                        .getGraveLocationList(entity.getLocation(), grave)
-                                                        .get(0), grave);
-                }
-                else {
-                    plugin.getEntityManager()
-                          .sendMessage("message.teleport-disabled", entity, entity.getLocation(), grave);
-                }
-
-                return true;
-            }
-            case "protect", "protection" -> {
-                if (grave.getTimeProtectionRemaining() > 0 || grave.getTimeProtectionRemaining() < 0) {
-                    plugin.getGraveManager().toggleGraveProtection(grave);
-                    playPlayerSound("sound.protection-change", entity, grave);
-                    plugin.getGUIManager().openGraveMenu(entity, grave, false);
-                }
-
-                return true;
-            }
-            case "distance" -> {
-                Location location = plugin.getGraveManager().getGraveLocation(entity.getLocation(), grave);
-
-                if (location != null) {
-                    if (entity.getWorld().equals(location.getWorld())) {
-                        plugin.getEntityManager().sendMessage("message.distance", entity, location, grave);
-                    }
-                    else {
-                        plugin.getEntityManager().sendMessage("message.distance-world", entity, location, grave);
-                    }
-                }
-
-                return true;
-            }
-            case "open", "loot", "virtual" -> {
-                double distance = plugin.getConfigDbl("virtual.distance", grave);
-
-                if (distance < 0) {
-                    plugin.getGraveManager().openGrave(entity, entity.getLocation(), grave);
-                }
-                else {
-                    Location location = plugin.getGraveManager().getGraveLocation(entity.getLocation(), grave);
-
-                    if (location != null) {
-                        if (entity.getLocation().distance(location) <= distance) {
-                            plugin.getGraveManager().openGrave(entity, entity.getLocation(), grave);
-                        }
-                        else {
-                            plugin.getEntityManager().sendMessage("message.distance-virtual", entity, location, grave);
-                        }
-                    }
-                }
-
-                return true;
-            }
-            case "autoloot" -> {
-                plugin.getGraveManager().autoLootGrave(entity, entity.getLocation(), grave);
-
-                return true;
-            }
-
-            default -> {
-                return false;
-            }
-        }
-    }
 
     public boolean canOpenGrave(Player player, @NotNull Grave grave) {
-        if (grave.getTimeProtectionRemaining() == 0 || player.hasPermission("graves.bypass")) {
+        if (player.hasPermission("graves.bypass")) {
             return true;
         }
-        else if (grave.getProtection() && grave.getOwnerUUID() != null) {
-            if (grave.getOwnerUUID().equals(player.getUniqueId())
-                && plugin.getConfigBool("protection.open.owner", grave)) {
-                return true;
-            }
-            else {
-                if (grave.getKillerUUID() != null) {
-                    if (grave.getKillerUUID().equals(player.getUniqueId())
-                        && plugin.getConfigBool("protection.open.killer", grave)) {
-                        return true;
-                    }
-                    else {
-                        return !grave.getOwnerUUID().equals(player.getUniqueId())
-                               && !grave.getKillerUUID()
-                                        .equals(player.getUniqueId())
-                               && plugin.getConfigBool("protection.open.other", grave);
-                    }
-                }
-                else {
-                    return (grave.getOwnerUUID().equals(player.getUniqueId())
-                            && plugin.getConfigBool("protection.open.missing.owner", grave)) || (!grave.getOwnerUUID()
-                                                                                                       .equals(player.getUniqueId())
-                                                                                                 && plugin.getConfigBool("protection.open.missing.other", grave));
-                }
-            }
-        }
-        else {
-            return true;
-        }
+
+        UUID ownerUUID = grave.getOwnerUUID();
+        return ownerUUID == null || ownerUUID.equals(player.getUniqueId());
     }
 
     public void spawnZombie(Location location, Entity entity, LivingEntity targetEntity, Grave grave) {
-        if ((plugin.getConfigBool("zombie.spawn-owner", grave) && grave.getOwnerUUID().equals(entity.getUniqueId())
-             || plugin.getConfigBool("zombie.spawn-other", grave) && !grave.getOwnerUUID()
-                                                                           .equals(entity.getUniqueId()))) {
-            spawnZombie(location, targetEntity, grave);
-        }
+        // Zombies disabled in barebones build
     }
 
     public void spawnZombie(Location location, Grave grave) {
-        spawnZombie(location, null, grave);
+        // Zombies disabled in barebones build
     }
 
-    @SuppressWarnings("deprecation")
-    private void spawnZombie(Location location, LivingEntity targetEntity, Grave grave) {
-        if (location != null && location.getWorld() != null && grave.getOwnerType() == EntityType.PLAYER) {
-            String zombieType = plugin.getConfigString("zombie.type", grave, "ZOMBIE").toUpperCase();
-            EntityType entityType = EntityType.ZOMBIE;
-
-            try {
-                entityType = EntityType.valueOf(zombieType);
-            }
-            catch (IllegalArgumentException exception) {
-                plugin.debugMessage(zombieType + " is not a EntityType ENUM", 1);
-            }
-
-            if (entityType.name().equals("ZOMBIE") && MaterialUtil.isWater(location.getBlock().getType())) {
-                try {
-                    entityType = EntityType.valueOf("DROWNED");
-                }
-                catch (IllegalArgumentException ignored) {
-                }
-            }
-
-            Entity entity = location.getWorld().spawnEntity(location, entityType);
-
-            if (entity instanceof LivingEntity livingEntity) {
-
-                if (livingEntity.getEquipment() != null) {
-                    if (plugin.getConfigBool("zombie.owner-head", grave)) {
-                        livingEntity.getEquipment()
-                                    .setHelmet(plugin.getCompatibility().getSkullItemStack(grave, plugin));
-                    }
-
-                    livingEntity.getEquipment().setChestplate(null);
-                    livingEntity.getEquipment().setLeggings(null);
-                    livingEntity.getEquipment().setBoots(null);
-                }
-
-                double zombieHealth = plugin.getConfigDbl("zombie.health", grave);
-
-                if (zombieHealth >= 0.5) {
-                    livingEntity.setMaxHealth(zombieHealth);
-                    livingEntity.setHealth(zombieHealth);
-                }
-
-                if (!plugin.getConfigBool("zombie.pickup", grave)) {
-                    livingEntity.setCanPickupItems(false);
-                }
-
-                String zombieName = StringUtil.parseString(plugin.getConfigString("zombie.name", grave), location, grave, plugin);
-
-                if (!zombieName.isEmpty()) {
-                    livingEntity.setCustomName(zombieName);
-                }
-
-                setDataByte(livingEntity, "graveZombie");
-                setDataString(livingEntity, "graveUUID", grave.getUUID().toString());
-                setDataString(livingEntity, "graveEntityType", grave.getOwnerType().name());
-
-                if (grave.getPermissionList() != null && !grave.getPermissionList().isEmpty()) {
-                    setDataString(livingEntity, "gravePermissionList", String.join("|", grave.getPermissionList()));
-                }
-
-                if (livingEntity instanceof Mob
-                    && targetEntity != null
-                    && !targetEntity.isInvulnerable()
-                    && (!(targetEntity instanceof Player)
-                        || ((Player) targetEntity).getGameMode() != GameMode.CREATIVE)) {
-                    ((Mob) livingEntity).setTarget(targetEntity);
-                }
-
-                if (livingEntity instanceof Zombie zombie && zombie.isBaby()) {
-                    zombie.setBaby(false);
-                }
-            }
-
-            plugin.debugMessage("Zombie type " + getEntityName(entity) + " spawned for grave " + grave.getUUID(), 1);
-        }
-    }
-
-    public void createArmorStand(Location location, Grave grave) {
-        if (plugin.getConfigBool("armor-stand.enabled", grave)) {
-            double offsetX = plugin.getConfigDbl("armor-stand.offset.x", grave);
-            double offsetY = plugin.getConfigDbl("armor-stand.offset.y", grave);
-            double offsetZ = plugin.getConfigDbl("armor-stand.offset.z", grave);
-            boolean marker = plugin.getConfigBool("armor-stand.marker", grave);
-            location = LocationUtil.roundLocation(location).add(offsetX + 0.5, offsetY, offsetZ + 0.5);
-
-            location.setYaw(grave.getYaw());
-            location.setPitch(grave.getPitch());
-
-            if (location.getWorld() != null) {
-                Material material = Material.matchMaterial(plugin.getConfigString("armor-stand.material", grave, "AIR"));
-
-                if (material != null && !material.isAir()) {
-                    ItemStack itemStack = new ItemStack(material, 1);
-                    ItemMeta itemMeta = itemStack.getItemMeta();
-                    int customModelData = plugin.getConfigInt("armor-stand.model-data", grave, -1);
-
-                    if (itemMeta != null) {
-                        if (customModelData > -1) {
-                            itemMeta.setCustomModelData(customModelData);
-                        }
-
-                        itemStack.setItemMeta(itemMeta);
-                        location.getBlock().setType(Material.AIR);
-
-                        ArmorStand armorStand = location.getWorld().spawn(location, ArmorStand.class);
-
-                        createEntityData(location, armorStand.getUniqueId(), grave.getUUID(), EntityData.Type.ARMOR_STAND);
-
-                        try {
-                            armorStand.setMarker(marker);
-                        }
-                        catch (NoSuchMethodError ignored) {
-                        }
-
-                        armorStand.setInvulnerable(true);
-
-                        armorStand.getScoreboardTags().add("graveArmorStand");
-                        armorStand.getScoreboardTags().add("graveArmorStandUUID:" + grave.getUUID());
-
-                        armorStand.setVisible(false);
-                        armorStand.setGravity(false);
-                        armorStand.setCustomNameVisible(false);
-                        armorStand.setSmall(plugin.getConfigBool("armor-stand.small", grave));
-
-                        if (armorStand.getEquipment() != null) {
-                            EquipmentSlot equipmentSlot = EquipmentSlot.HEAD;
-
-                            try {
-                                equipmentSlot = EquipmentSlot.valueOf(plugin.getConfigString("armor-stand.slot", grave, "HEAD"));
-                            }
-                            catch (IllegalArgumentException ignored) {
-                            }
-
-                            armorStand.getEquipment().setItem(equipmentSlot, itemStack);
-                        }
-                    }
-                }
-            }
-        }
-    }
-
-    public void createItemFrame(Location location, Grave grave) {
-        if (plugin.getConfigBool("item-frame.enabled", grave)) {
-            double offsetX = plugin.getConfigDbl("item-frame.offset.x", grave);
-            double offsetY = plugin.getConfigDbl("item-frame.offset.y", grave);
-            double offsetZ = plugin.getConfigDbl("item-frame.offset.z", grave);
-            location = LocationUtil.roundLocation(location).add(offsetX + 0.5, offsetY, offsetZ + 0.5);
-
-            location.setYaw(grave.getYaw());
-            location.setPitch(grave.getPitch());
-
-            if (location.getWorld() != null) {
-                Material material = Material.matchMaterial(plugin.getConfigString("item-frame.material", grave, "AIR"));
-
-                if (material != null && !material.isAir()) {
-                    ItemStack itemStack = new ItemStack(material, 1);
-                    ItemMeta itemMeta = itemStack.getItemMeta();
-                    int customModelData = plugin.getConfigInt("item-frame.model-data", grave, -1);
-
-                    if (itemMeta != null) {
-                        if (customModelData > -1) {
-                            itemMeta.setCustomModelData(customModelData);
-                        }
-
-                        itemStack.setItemMeta(itemMeta);
-                        location.getBlock().setType(Material.AIR);
-
-                        ItemFrame itemFrame = location.getWorld().spawn(location, ItemFrame.class);
-
-                        itemFrame.setFacingDirection(BlockFace.UP);
-                        itemFrame.setRotation(BlockFaceUtil.getBlockFaceRotation(BlockFaceUtil.getYawBlockFace(location.getYaw())));
-                        itemFrame.setVisible(false);
-                        itemFrame.setGravity(false);
-                        itemFrame.setCustomNameVisible(false);
-                        itemFrame.setItem(itemStack);
-
-                        itemFrame.setInvulnerable(true);
-
-                        itemFrame.getScoreboardTags().add("graveItemFrame");
-                        itemFrame.getScoreboardTags().add("graveItemFrameUUID:" + grave.getUUID());
-
-                        createEntityData(location, itemFrame.getUniqueId(), grave.getUUID(), EntityData.Type.ITEM_FRAME);
-                    }
-                }
-            }
-        }
-    }
 
     public void removeEntity(Grave grave) {
-        removeEntity(getEntityDataMap(getLoadedEntityDataList(grave)));
-    }
-
-    public void removeEntity(@NotNull Map<EntityData, Entity> entityDataMap) {
-        List<EntityData> entityDataList = new ArrayList<>();
-
-        for (Map.Entry<EntityData, Entity> entry : entityDataMap.entrySet()) {
-            if (entry.getKey().getType() == EntityData.Type.ARMOR_STAND
-                || entry.getKey().getType() == EntityData.Type.ITEM_FRAME
-                || entry.getKey().getType() == EntityData.Type.HOLOGRAM) {
-                entry.getValue().remove();
-                entityDataList.add(entry.getKey());
-            }
-        }
-
-        plugin.getDataManager().removeEntityData(entityDataList);
+        // No additional entities to clean up
     }
 
     public @NotNull Map<EquipmentSlot, ItemStack> getEquipmentMap(@NotNull LivingEntity livingEntity, Grave grave) {

@@ -1,8 +1,8 @@
 # Epic Survival Graves - Custom Fork
 
-**⚠️ This is a private customized fork for internal server use only.**
+**⚠️ This is a private EnderCartCraft-only build.**
 
-This fork is maintained exclusively for use on our Minecraft server and is **not intended for public use**. We provide no support, will not accept pull requests, and make no guarantees about maintenance beyond our own needs.
+This fork exists solely to run the EnderCartCraft survival world. It is **not intended for public use**, we provide zero support, and we decline all pull requests.
 
 **Looking for a Graves plugin?** Please use the actively maintained [AvarionMC/graves](https://github.com/AvarionMC/graves) project instead, unless you specifically need the exact customizations made for our server.
 
@@ -12,15 +12,20 @@ This is a fork of [AvarionMC/graves](https://github.com/AvarionMC/graves), maint
 
 All code is released under GPLv3, same as the original projects.
 
-## Custom Modifications
+## EnderCartCraft direction (build-5)
 
-This fork includes the following changes from the upstream AvarionMC version:
+Our stripped fork keeps only the behaviors EnderCartCraft needs:
 
-- **Removed:** Obituary functionality
-- **Removed:** Graveyard system (commands, permissions, management)
-- **Removed:** Right-click to open graves (graves must be broken to access items)
-- **Modified:** Version check notifications (shows upstream updates available, but acknowledges custom build)
-- **Updated:** Based on v4.9.11 with dependency updates and bug fixes
+- Graves always spawn player heads on survival deaths, with enchantment particles for visual cues.
+- Slot-perfect restoration is mandatory: hotbar, main inventory, armor, off-hand, and stored layout all snap back into place. Extra items spill to the ground.
+- A flat 10 % XP tax is enforced. Graves store 90 % of the player’s experience and hand it back on loot.
+- Placement always attempts the original death spot or a nearby safe block. If we cannot place, we force keep-inventory/keep-xp for that death.
+- Protection is simple: only the owner or an operator with `graves.bypass` can loot before timeout.
+- Every grave expires after 30 minutes. On timeout, contents drop at the primary head location and the grave block is removed.
+- `/graves` is the only command. It lists active graves with world, coordinates, and time remaining.
+- PlaceholderAPI is the lone optional integration; we expose placeholders for HUD text but nothing else.
+- No configs, recipes, crafting tokens, or importers remain. Every value is hardcoded in `Settings`.
+- No telemetry (bStats, metrics, update pings) ships with this build.
 
 ## Disclaimer
 
@@ -30,82 +35,31 @@ For any plugin-related concerns, feature requests, or support:
 
 We will not provide support or manage contributions for this repository.
 
-# What is it?
+# What is it now?
 
-The **ULTIMATE** full-featured lightweight death chest plugin / player grave plugin! Every feature you could ever need
-and more! While still being lightweight and efficient.
+A hardcoded, zero-configuration graves plugin purpose-built for our survival server. Every required behavior is baked
+directly into the code:
 
-## Top Features
+* Player-head graves always spawn for survival-player deaths and emit enchantment-table particles.
+* Graves track exact slot contents (hotbar, inventory grid, armor, and off-hand) and auto-equip on loot.
+* Stored experience always returns 90% of the player's balance (10% death tax).
+* Graves expire 30 minutes after creation; if placement fails we fall back to keep-inventory semantics.
+* `/graves` lists the caller's active graves with coordinates and remaining lifetime.
+* PlaceholderAPI expansions are supported when the PlaceholderAPI plugin is present; no other integrations remain.
 
-* Customizable
-* Schematics
-* Economy
-* Regions
-* Placeholders
-* Protection
-* Zombies
-* Corpses
-* Models
-* Compass
-* Head Drops
-* Holograms
-* Particles
-* Tokens
-* Blacklisting
-* Reload Safe
-
-## Supports
-
-* 1.18.\*, 1.19.\*, 1.20.\*, 1.21.\*
-* Spigot, Paper, Purpur, Airplane, Pufferfish, Tuinity, CraftBukkit, CatServer, Mohist, Magma, MultiPaper
-* GeyserMC (Bedrock Players)
-* Forge/Bukkit Hybrid servers (Mohist, Magma, CatServer)
-
-## Integrations
-
-* Vault (Economy)
-* WorldEdit (Schematics)
-* WorldGuard (Flags)
-* PlaceholderAPI (Placeholders)
-* FurnitureLib/DiceFurniture (Furniture)
-* FurnitureEngine (Furniture)
-* ItemsAdder (Furniture/Blocks)
-* Oraxen (Furniture/Blocks)
-* ChestSort (Sorting Grave)
-* ProtectionLib (Protected Region Detection)
-* PlayerNPC (Corpses)
-
-* Towny
-* ItemBridge
-* MineDown
-* MiniMessage
-* SimpleClaimSystem
+There are **no** YAML files, commands, or toggles left. If you need a different behavior, fork this repo again and hardcode it.
 
 ## Commands
 
-| Command                                           | what does it do?             |
-|---------------------------------------------------|------------------------------|
-| **/graves**                                       | Player graves                |
-| **/graves help**                                  | Plugin info                  |
-| **/graves list** _{player}_                       | List another players graves. |
-| **/graves givetoken** _{player} {token} {amount}_ | Give grave token (OP)        |
-| **/graves dump**                                  | Dump server information (OP) |
-| **/graves debug** _{level}_                       | Change debug level (OP)      |
-| **/graves reload**                                | Reload command (OP)          |
+| Command     | Description                               |
+|-------------|-------------------------------------------|
+| `/graves`   | Lists the caller's active graves inline.  |
 
 ## Permissions
 
-    graves.place (Default)
-    graves.open (Default)
-    graves.break (Default)
-    graves.teleport (Default)
-    graves.experience (Default)
-    graves.autoloot (Default)
-    graves.gui (Default)
-    graves.gui.other (OP)
-    graves.givetoken (OP)
-    graves.bypass (OP)
-    graves.reload (OP)
+| Permission      | Description                                                |
+|-----------------|------------------------------------------------------------|
+| `graves.bypass` | Allows bypassing grave protection timers when looting.     |
 
 ### Testing on a local server
 
@@ -123,4 +77,3 @@ For the official, actively maintained version:
 
 * **GitHub**: <https://github.com/AvarionMC/graves>
 * **Spigot**: <https://www.spigotmc.org/resources/graves.116202/>
-* **bStats**: <https://bstats.org/plugin/bukkit/AvarionGraves/21607>

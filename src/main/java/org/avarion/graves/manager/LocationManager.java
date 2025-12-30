@@ -40,24 +40,6 @@ public final class LocationManager {
         CacheManager.lastLocationMap.remove(entity.getUniqueId());
     }
 
-    public @Nullable Location getSafeTeleportLocation(Entity entity, @NotNull Location location, Grave grave, Graves plugin) {
-        if (location.getWorld() != null) {
-            if (plugin.getConfigBool("teleport.unsafe", grave) || isLocationSafePlayer(location)) {
-                return location;
-            }
-            else if (plugin.getConfigBool("teleport.top", grave)) {
-                Location topLocation = getTop(location, entity, grave);
-
-                if (topLocation != null && isLocationSafePlayer(topLocation) && topLocation.getWorld() != null) {
-                    plugin.getEntityManager().sendMessage("message.teleport-top", entity, topLocation, grave);
-
-                    return topLocation;
-                }
-            }
-        }
-
-        return null;
-    }
 
     public Location getSafeGraveLocation(LivingEntity livingEntity, Location location, Grave grave) {
         location = LocationUtil.roundLocation(location);
@@ -77,14 +59,9 @@ public final class LocationManager {
                 }
                 else {
                     Location graveLocation;
-                    if (block.getType().isAir() || MaterialUtil.isWater(block.getType())) {
-                        graveLocation = plugin.getConfigBool("placement.ground", grave)
-                                        ? getGround(location, livingEntity, grave)
-                                        : null;
-                    }
-                    else {
-                        graveLocation = getRoof(location, livingEntity, grave);
-                    }
+                    graveLocation = (block.getType().isAir() || MaterialUtil.isWater(block.getType()))
+                                    ? getGround(location, livingEntity, grave)
+                                    : getRoof(location, livingEntity, grave);
 
                     if (graveLocation != null) {
                         return graveLocation;
@@ -157,60 +134,52 @@ public final class LocationManager {
     }
 
     public @Nullable Location getVoid(Location location, Entity entity, Grave grave) {
-        if (plugin.getConfigBool("placement.void", grave)) {
-            location = location.clone();
+        location = location.clone();
 
-            if (plugin.getConfigBool("placement.void-smart", grave)) {
-                Location solidLocation = plugin.getLocationManager().getLastSolidLocation(entity);
+        Location solidLocation = plugin.getLocationManager().getLastSolidLocation(entity);
 
-                if (solidLocation != null) {
-                    return !hasGrave(solidLocation) ? solidLocation : getRoof(solidLocation, entity, grave);
-                }
+        if (solidLocation != null) {
+            return !hasGrave(solidLocation) ? solidLocation : getRoof(solidLocation, entity, grave);
+        }
+
+        if (location.getWorld() != null) {
+            Location bottomLocation = getRoof(location, entity, grave);
+
+            if (bottomLocation != null) {
+                return bottomLocation;
             }
 
-            if (location.getWorld() != null) {
-                Location bottomLocation = getRoof(location, entity, grave);
+            location.setY(getMinHeight(location));
 
-                if (bottomLocation != null) {
-                    return bottomLocation;
-                }
-
-                location.setY(getMinHeight(location));
-
-                return location;
-            }
+            return location;
         }
 
         return null;
     }
 
     public @Nullable Location getLavaTop(Location location, Entity entity, Grave grave) {
-        if (plugin.getConfigBool("placement.lava-smart", grave)) {
-            Location solidLocation = plugin.getLocationManager().getLastSolidLocation(entity);
+        Location solidLocation = plugin.getLocationManager().getLastSolidLocation(entity);
 
-            if (solidLocation != null) {
-                return !hasGrave(solidLocation) ? solidLocation : getRoof(solidLocation, entity, grave);
-            }
+        if (solidLocation != null) {
+            return !hasGrave(solidLocation) ? solidLocation : getRoof(solidLocation, entity, grave);
         }
 
-        if (plugin.getConfigBool("placement.lava-top", grave)) {
-            location = location.clone();
+        location = location.clone();
 
-            if (location.getWorld() != null) {
-                int counter = 0;
+        if (location.getWorld() != null) {
+            int counter = 0;
 
-                while (counter <= location.getWorld().getMaxHeight()) {
-                    Block block = location.getBlock();
+            while (counter <= location.getWorld().getMaxHeight()) {
+                Block block = location.getBlock();
 
-                    if (block.getType().isAir()
-                        && !plugin.getCompatibility().hasTitleData(block)
-                        && !MaterialUtil.isLava(block.getType())) {
-                        return location;
-                    }
-
-                    location.add(0, 1, 0);
-                    counter++;
+                if (block.getType().isAir()
+                    && !plugin.getCompatibility().hasTitleData(block)
+                    && !MaterialUtil.isLava(block.getType())) {
+                    return location;
                 }
+
+                location.add(0, 1, 0);
+                counter++;
             }
         }
 
@@ -220,22 +189,7 @@ public final class LocationManager {
     @SuppressWarnings("BooleanMethodIsAlwaysInverted")
     public boolean canBuild(LivingEntity livingEntity, Location location, List<String> permissionList) {
         if (livingEntity instanceof Player player) {
-
-            // Check if the player has permission to build
-            boolean canBuild = !plugin.getConfigBool("placement.can-build", player, permissionList)
-                               || plugin.getCompatibility().canBuild(player, location, plugin);
-
-            // Check if the player can build in a claim using ProtectionLib
-            boolean canBuildProtectionLib = !plugin.getIntegrationManager().hasProtectionLib()
-                                            || !plugin.getConfigBool("placement.can-build-protectionlib", player, permissionList)
-                                            || plugin.getIntegrationManager().getProtectionLib().canBuild(location, player);
-
-            // Check if the player can build in a claim using SimpleClaimSystem
-            boolean canBuildSCS = !plugin.getIntegrationManager().hasSimpleClaimSystem()
-                                  || !plugin.getConfigBool("placement.can-build-simpleclaimsystem", player, permissionList)
-                                  || plugin.getIntegrationManager().getSimpleClaimSystem().canBuild(player, location);
-
-            return canBuild && canBuildProtectionLib && canBuildSCS;
+            return plugin.getCompatibility().canBuild(player, location, plugin);
         }
 
         return true;

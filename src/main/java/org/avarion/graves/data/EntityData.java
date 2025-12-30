@@ -36,7 +36,7 @@ public class EntityData implements Serializable {
     }
 
     public enum Type {
-        HOLOGRAM, ARMOR_STAND, ITEM_FRAME, FURNITURELIB, FURNITUREENGINE, ITEMSADDER, ORAXEN, PLAYERNPC,
+        PLAYERNPC
     }
 
 }

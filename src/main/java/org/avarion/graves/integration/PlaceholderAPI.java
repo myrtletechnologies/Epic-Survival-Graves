@@ -36,7 +36,7 @@ public final class PlaceholderAPI extends PlaceholderExpansion implements Relati
     @NotNull
     @Override
     public String getAuthor() {
-        return plugin.getDescription().getAuthors().toString();
+        return String.join(", ", plugin.getDescription().getAuthors());
     }
 
     @NotNull

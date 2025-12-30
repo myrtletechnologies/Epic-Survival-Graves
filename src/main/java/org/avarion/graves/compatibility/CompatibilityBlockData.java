@@ -87,31 +87,16 @@ public final class CompatibilityBlockData implements Compatibility {
 
     @SuppressWarnings("deprecation")
     private void updateSkullBlock(@NotNull Block block, Grave grave, @NotNull Graves plugin) {
-        int headType = plugin.getConfigInt("block.head.type", grave);
-        String headBase64 = plugin.getConfigString("block.head.base64", grave);
-        String headName = plugin.getConfigString("block.head.name", grave);
         Skull skull = (Skull) block.getState();
         Rotatable skullRotate = (Rotatable) block.getBlockData();
 
         skullRotate.setRotation(BlockFaceUtil.getYawBlockFace(grave.getYaw()).getOppositeFace());
         skull.setBlockData(skullRotate);
-
-        if (headType == 0) {
-            if (grave.getOwnerType() == EntityType.PLAYER) {
-                skull.setOwningPlayer(plugin.getServer().getOfflinePlayer(grave.getOwnerUUID()));
-            }
-            else if (grave.getOwnerTexture() != null) {
-                SkinUtil.setSkullBlockTexture(skull, grave.getOwnerName(), grave.getOwnerTexture());
-            }
-            else if (headBase64 != null && !headBase64.isEmpty()) {
-                SkinUtil.setSkullBlockTexture(skull, grave.getOwnerName(), headBase64);
-            }
+        if (grave.getOwnerType() == EntityType.PLAYER && grave.getOwnerUUID() != null) {
+            skull.setOwningPlayer(plugin.getServer().getOfflinePlayer(grave.getOwnerUUID()));
         }
-        else if (headType == 1 && headBase64 != null && !headBase64.isEmpty()) {
-            SkinUtil.setSkullBlockTexture(skull, grave.getOwnerName(), headBase64);
-        }
-        else if (headType == 2 && headName != null && headName.length() <= 16) {
-            skull.setOwningPlayer(plugin.getServer().getOfflinePlayer(headName));
+        else if (grave.getOwnerTexture() != null) {
+            SkinUtil.setSkullBlockTexture(skull, grave.getOwnerName(), grave.getOwnerTexture());
         }
 
         skull.update();

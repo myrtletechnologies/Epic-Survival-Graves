@@ -5,7 +5,6 @@ import org.avarion.graves.Graves;
 import org.avarion.graves.data.BlockData;
 import org.avarion.graves.data.ChunkData;
 import org.avarion.graves.data.EntityData;
-import org.avarion.graves.data.HologramData;
 import org.avarion.graves.type.Grave;
 import org.avarion.graves.util.*;
 import org.bukkit.Location;
@@ -37,59 +36,12 @@ public final class DataManager {
             loadTables();
             loadGraveMap();
             loadBlockMap();
-            loadEntityMap("armorstand", EntityData.Type.ARMOR_STAND);
-            loadEntityMap("itemframe", EntityData.Type.ITEM_FRAME);
-            loadHologramMap();
-
-            if (plugin.getIntegrationManager().hasFurnitureLib()) {
-                loadEntityMap("furniturelib", EntityData.Type.FURNITURELIB);
-            }
-
-            if (plugin.getIntegrationManager().hasFurnitureEngine()) {
-                loadEntityMap("furnitureengine", EntityData.Type.FURNITUREENGINE);
-            }
-
-            if (plugin.getIntegrationManager().hasItemsAdder()) {
-                loadEntityMap("itemsadder", EntityData.Type.ITEMSADDER);
-            }
-
-            if (plugin.getIntegrationManager().hasOraxen()) {
-                loadEntityMap("oraxen", EntityData.Type.ORAXEN);
-            }
-
-            if (plugin.getIntegrationManager().hasPlayerNPC()) {
-                loadEntityMap("playernpc", EntityData.Type.PLAYERNPC);
-                plugin.getIntegrationManager().getPlayerNPC().createCorpses();
-            }
         });
     }
 
     private void loadTables() {
         setupGraveTable();
         setupBlockTable();
-        setupHologramTable();
-        setupEntityTable("armorstand");
-        setupEntityTable("itemframe");
-
-        if (plugin.getIntegrationManager().hasFurnitureLib()) {
-            setupEntityTable("furniturelib");
-        }
-
-        if (plugin.getIntegrationManager().hasFurnitureEngine()) {
-            setupEntityTable("furnitureengine");
-        }
-
-        if (plugin.getIntegrationManager().hasItemsAdder()) {
-            setupEntityTable("itemsadder");
-        }
-
-        if (plugin.getIntegrationManager().hasOraxen()) {
-            setupEntityTable("oraxen");
-        }
-
-        if (plugin.getIntegrationManager().hasPlayerNPC()) {
-            setupEntityTable("playernpc");
-        }
     }
 
     public void reload() {
@@ -104,12 +56,8 @@ public final class DataManager {
         this.url = "jdbc:sqlite:" + plugin.getDataFolder() + File.separator + "data" + File.separator + "data.db";
 
         ClassUtil.loadClass("org.sqlite.JDBC");
-        executeUpdate("PRAGMA journal_mode=" + plugin.getConfig()
-                                                     .getString("settings.storage.sqlite.journal-mode", "WAL")
-                                                     .toUpperCase() + ";");
-        executeUpdate("PRAGMA synchronous=" + plugin.getConfig()
-                                                    .getString("settings.storage.sqlite.synchronous", "OFF")
-                                                    .toUpperCase() + ";");
+        executeUpdate("PRAGMA journal_mode=WAL;");
+        executeUpdate("PRAGMA synchronous=OFF;");
     }
 
     @SuppressWarnings("ResultOfMethodCallIgnored")
@@ -228,6 +176,7 @@ public final class DataManager {
         fields.put("yaw", "FLOAT(16)");
         fields.put("pitch", "FLOAT(16)");
         fields.put("inventory", "TEXT");
+        fields.put("inventory_layout", "TEXT");
         fields.put("equipment", "TEXT");
         fields.put("experience", "INT(16)");
         fields.put("protection", "INT(1)");
@@ -250,16 +199,6 @@ public final class DataManager {
         createOrUpdateTable("block", fields);
     }
 
-    public void setupHologramTable() {
-        Map<String, String> fields = new HashMap<>();
-
-        fields.put("location", "VARCHAR(255)");
-        fields.put("uuid_entity", "VARCHAR(255)");
-        fields.put("uuid_grave", "VARCHAR(255)");
-        fields.put("line", "INT(16)");
-
-        createOrUpdateTable("hologram", fields);
-    }
 
     private void setupEntityTable(String name) {
         Map<String, String> fields = new HashMap<>();
@@ -341,35 +280,6 @@ public final class DataManager {
         }
     }
 
-    private void loadHologramMap() {
-        ResultSet resultSet = executeQuery("SELECT * FROM hologram;");
-
-        if (resultSet != null) {
-            try {
-                while (resultSet.next()) {
-                    Location location = null;
-
-                    if (resultSet.getString("location") != null) {
-                        location = LocationUtil.stringToLocation(resultSet.getString("location"));
-                    }
-                    else if (resultSet.getString("chunk") != null) {
-                        location = LocationUtil.chunkStringToLocation(resultSet.getString("chunk"));
-                    }
-
-                    if (location != null) {
-                        UUID uuidEntity = UUID.fromString(resultSet.getString("uuid_entity"));
-                        UUID uuidGrave = UUID.fromString(resultSet.getString("uuid_grave"));
-                        int line = resultSet.getInt("line");
-
-                        getChunkData(location).addEntityData(new HologramData(location, uuidEntity, uuidGrave, line));
-                    }
-                }
-            }
-            catch (SQLException exception) {
-                exception.printStackTrace();
-            }
-        }
-    }
 
     public void addBlockData(@NotNull BlockData blockData) {
         getChunkData(blockData.location()).addBlockData(blockData);
@@ -404,43 +314,7 @@ public final class DataManager {
                                                                  + "';"));
     }
 
-    public void addHologramData(@NotNull HologramData hologramData) {
-        getChunkData(hologramData.getLocation()).addEntityData(hologramData);
 
-        String location = "'" + LocationUtil.locationToString(hologramData.getLocation()) + "'";
-        String uuidEntity = "'" + hologramData.getUUIDEntity() + "'";
-        String uuidGrave = "'" + hologramData.getUUIDGrave() + "'";
-        int line = hologramData.getLine();
-
-        plugin.getServer()
-              .getScheduler()
-              .runTaskAsynchronously(plugin, () -> executeUpdate(
-                      "INSERT INTO hologram (location, uuid_entity, uuid_grave, line) VALUES ("
-                      + location
-                      + ", "
-                      + uuidEntity
-                      + ", "
-                      + uuidGrave
-                      + ", "
-                      + line
-                      + ");"));
-    }
-
-    public void removeHologramData(@NotNull List<EntityData> entityDataList) {
-        try {
-            Statement statement = connection.createStatement();
-
-            for (EntityData hologramData : entityDataList) {
-                getChunkData(hologramData.getLocation()).removeEntityData(hologramData);
-                statement.addBatch("DELETE FROM hologram WHERE uuid_entity = '" + hologramData.getUUIDEntity() + "';");
-            }
-
-            plugin.getServer().getScheduler().runTaskAsynchronously(plugin, () -> executeBatch(statement));
-        }
-        catch (SQLException exception) {
-            exception.printStackTrace();
-        }
-    }
 
     public void addEntityData(@NotNull EntityData entityData) {
         getChunkData(entityData.getLocation()).addEntityData(entityData);
@@ -497,17 +371,11 @@ public final class DataManager {
     }
 
     public String entityDataTypeTable(EntityData.@NotNull Type type) {
-        return switch (type) {
-            case ARMOR_STAND -> "armorstand";
-            case ITEM_FRAME -> "itemframe";
-            case HOLOGRAM -> "hologram";
-            case FURNITURELIB -> "furniturelib";
-            case FURNITUREENGINE -> "furnitureengine";
-            case ITEMSADDER -> "itemsadder";
-            case ORAXEN -> "oraxen";
-            case PLAYERNPC -> "playernpc";
-            default -> type.name().toLowerCase().replace("_", "");
-        };
+        if (type == EntityData.Type.PLAYERNPC) {
+            return "playernpc";
+        }
+
+        return null;
     }
 
     public void addGrave(Grave grave) {
@@ -539,6 +407,9 @@ public final class DataManager {
         float yaw = grave.getYaw();
         float pitch = grave.getPitch();
         String inventory = "'" + InventoryUtil.inventoryToString(grave.getInventory()) + "'";
+        String inventoryLayout = grave.getStoredInventoryLayout() != null
+                                 ? "'" + Base64Util.objectToBase64(grave.getStoredInventoryLayout()) + "'"
+                                 : "NULL";
         String equipment = "'" + Base64Util.objectToBase64(grave.getEquipmentMap()) + "'";
         String permissions = grave.getPermissionList() != null && !grave.getPermissionList().isEmpty() ? "'"
                                                                                                          + StringUtils.join(grave.getPermissionList(), "|")
@@ -554,7 +425,7 @@ public final class DataManager {
               .runTaskAsynchronously(plugin, () -> executeUpdate(
                       "INSERT INTO grave (uuid, owner_type, owner_name, owner_name_display, owner_uuid,"
                       + " owner_texture, owner_texture_signature, killer_type, killer_name, killer_name_display,"
-                      + " killer_uuid, location_death, yaw, pitch, inventory, equipment, experience, protection, time_alive,"
+                      + " killer_uuid, location_death, yaw, pitch, inventory, inventory_layout, equipment, experience, protection, time_alive,"
                       + "time_protection, time_creation, permissions) VALUES ("
                       + uuid
                       + ", "
@@ -585,6 +456,8 @@ public final class DataManager {
                       + pitch
                       + ", "
                       + inventory
+                      + ", "
+                      + inventoryLayout
                       + ", "
                       + equipment
                       + ", "
@@ -670,7 +543,18 @@ public final class DataManager {
             grave.setPermissionList(resultSet.getString("permissions") != null
                                     ? new ArrayList<>(Arrays.asList(resultSet.getString("permissions").split("\\|")))
                                     : null);
-            grave.setInventory(InventoryUtil.stringToInventory(grave, resultSet.getString("inventory"), StringUtil.parseString(plugin.getConfigString("gui.grave.title", grave), grave.getLocationDeath(), grave, plugin), plugin));
+            String inventoryTitle = grave.getOwnerNameDisplay() != null
+                                    ? grave.getOwnerNameDisplay() + "'s Grave"
+                                    : "Grave";
+            grave.setInventory(InventoryUtil.stringToInventory(grave, resultSet.getString("inventory"), inventoryTitle, plugin));
+
+            if (resultSet.getString("inventory_layout") != null) {
+                Object layoutObject = Base64Util.base64ToObject(resultSet.getString("inventory_layout"));
+
+                if (layoutObject instanceof ItemStack[] itemStacks) {
+                    grave.setStoredInventoryLayout(itemStacks);
+                }
+            }
 
             if (resultSet.getString("equipment") != null) {
                 Map<EquipmentSlot, ItemStack> equipmentMap = (Map<EquipmentSlot, ItemStack>) Base64Util.base64ToObject(resultSet.getString("equipment"));

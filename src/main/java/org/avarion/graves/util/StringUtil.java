@@ -2,8 +2,8 @@ package org.avarion.graves.util;
 
 import me.clip.placeholderapi.PlaceholderAPI;
 import net.md_5.bungee.api.ChatColor;
-import org.apache.commons.lang3.StringUtils;
 import org.avarion.graves.Graves;
+import org.avarion.graves.config.Settings;
 import org.avarion.graves.type.Grave;
 import org.bukkit.Location;
 import org.bukkit.entity.Entity;
@@ -54,20 +54,23 @@ public final class StringUtil {
 
     public static @NotNull String parseString(String string, Entity entity, String name, Location location, Grave grave, Graves plugin) {
         if (location != null) {
-            string = string.replace("%world%", location.getWorld() != null ? location.getWorld().getName() : "")
+            String worldName = location.getWorld() != null ? location.getWorld().getName() : "";
+            string = string.replace("%world%", worldName)
+                           .replace("%world_formatted%", format(worldName))
                            .replace("%x%", String.valueOf(location.getBlockX() + 0.5))
                            .replace("%y%", String.valueOf(location.getBlockY() + 0.5))
                            .replace("%z%", String.valueOf(location.getBlockZ() + 0.5));
 
-            if (string.contains("%distance%") && entity.getWorld().equals(location.getWorld())) {
-                string = string.replace("%distance%", String.valueOf(Math.round(entity.getLocation()
-                                                                                      .distance(location))));
+            if (string.contains("%distance%")
+                && entity != null
+                && entity.getWorld() != null
+                && location.getWorld() != null
+                && entity.getWorld().equals(location.getWorld())) {
+                string = string.replace("%distance%", String.valueOf(Math.round(entity.getLocation().distance(location))));
             }
-
-            if (string.contains("%teleport_cost%")) {
-                string = string.replace("%teleport_cost%", String.valueOf(plugin.getEntityManager()
-                                                                                .getTeleportCost(location, grave.getLocationDeath(), grave)));
-            }
+        }
+        else {
+            string = string.replace("%world%", "").replace("%world_formatted%", "");
         }
 
         if (grave != null) {
@@ -98,12 +101,7 @@ public final class StringUtil {
                            .replace("%time_protection_remaining_formatted%", getTimeString(grave, grave.getTimeProtectionRemaining(), plugin))
                            .replace("%time_lived%", String.valueOf(grave.getLivedTime()))
                            .replace("%time_lived_formatted%", getTimeString(grave, grave.getLivedTime(), plugin))
-                           .replace("%state_protection%", grave.getProtection() && (grave.getTimeProtectionRemaining()
-                                                                                    > 0
-                                                                                    || grave.getTimeProtectionRemaining()
-                                                                                       < 0)
-                                                          ? plugin.getConfigString("protection.state.protected", grave, "Protected")
-                                                          : plugin.getConfigString("protection.state.unprotected", grave, "Unprotected"))
+                           .replace("%state_protection%", grave.getProtection() ? "Protected" : "Unprotected")
                            .replace("%item%", String.valueOf(grave.getItemAmount()));
             if (grave.getExperience() > 0) {
                 string = string.replace("%level%", String.valueOf(ExperienceUtil.getLevelFromExperience(grave.getExperience())))
@@ -119,14 +117,6 @@ public final class StringUtil {
             }
         }
 
-        if (location != null && location.getWorld() != null && grave != null) {
-            string = string.replace("%world_formatted%", location.getWorld() != null ? plugin.getConfigString(
-                    "message.world."
-                    + location.getWorld().getName(), grave, StringUtil.format(location.getWorld().getName())) : "");
-        }
-        else {
-            string = string.replace("%world_formatted%", "");
-        }
 
         if (name != null) {
             string = string.replace("%name%", name)
@@ -141,9 +131,6 @@ public final class StringUtil {
                            .replace("%interact_uuid%", entity.getUniqueId().toString());
         }
 
-        if (plugin.getIntegrationManager().hasMineDown()) {
-            string = plugin.getIntegrationManager().getMineDown().parseString(string);
-        }
 
         Matcher matcher = hexColorPattern.matcher(string);
 
@@ -156,10 +143,6 @@ public final class StringUtil {
             matcher = hexColorPattern.matcher(string);
         }
 
-        if (plugin.getIntegrationManager().hasMiniMessage()) {
-            string = string.replace("§", "&");
-            string = plugin.getIntegrationManager().getMiniMessage().parseString(string);
-        }
 
         return string.replace("&", "§");
     }
@@ -192,55 +175,38 @@ public final class StringUtil {
 
     public static String getDateString(Grave grave, long time, Graves plugin) {
         if (time > 0) {
-            return new SimpleDateFormat(plugin.getConfigString("time.date", grave, "dd-MM-yyyy")).format(new Date(time));
+            return new SimpleDateFormat(Settings.DATE_FORMAT).format(new Date(time));
         }
 
-        return plugin.getConfigString("time.infinite", grave);
+        return Settings.INFINITE_TIME_TEXT;
     }
 
     public static String getTimeString(Grave grave, long time, Graves plugin) {
-        if (time > 0) {
-            time = time / 1000;
-            int day = (int) TimeUnit.SECONDS.toDays(time);
-            long hour = TimeUnit.SECONDS.toHours(time) - (day * 24L);
-            long minute = TimeUnit.SECONDS.toMinutes(time) - (TimeUnit.SECONDS.toHours(time) * 60);
-            long second = TimeUnit.SECONDS.toSeconds(time) - (TimeUnit.SECONDS.toMinutes(time) * 60);
-
-            String timeDay = "";
-            String timeHour = "";
-            String timeMinute = "";
-            String timeSecond = "";
-
-            if (day > 0) {
-                timeDay = plugin.getConfigString("time.day", grave).replace("%day%", String.valueOf(day));
-            }
-
-            if (hour > 0) {
-                timeHour = plugin.getConfigString("time.hour", grave).replace("%hour%", String.valueOf(hour));
-            }
-
-            if (minute > 0) {
-                timeMinute = plugin.getConfigString("time.minute", grave).replace("%minute%", String.valueOf(minute));
-            }
-
-            if (second > 0) {
-                timeSecond = plugin.getConfigString("time.second", grave).replace("%second%", String.valueOf(second));
-            }
-
-            return normalizeSpace(timeDay + timeHour + timeMinute + timeSecond);
+        if (time < 0) {
+            return Settings.INFINITE_TIME_TEXT;
         }
 
-        return plugin.getConfigString("time.infinite", grave);
-    }
+        long seconds = time / 1000;
+        long days = TimeUnit.SECONDS.toDays(seconds);
+        seconds -= TimeUnit.DAYS.toSeconds(days);
+        long hours = TimeUnit.SECONDS.toHours(seconds);
+        seconds -= TimeUnit.HOURS.toSeconds(hours);
+        long minutes = TimeUnit.SECONDS.toMinutes(seconds);
+        seconds -= TimeUnit.MINUTES.toSeconds(minutes);
 
-    private static String normalizeSpace(String string) {
-        try {
-            string = StringUtils.normalizeSpace(string);
+        StringBuilder builder = new StringBuilder();
+        if (days > 0) {
+            builder.append(days).append("d ");
         }
-        catch (NoClassDefFoundError ignored) {
+        if (hours > 0 || builder.length() > 0) {
+            builder.append(hours).append("h ");
+        }
+        if (minutes > 0 || builder.length() > 0) {
+            builder.append(minutes).append("m ");
         }
 
-        return string;
+        builder.append(seconds).append("s");
+        return builder.toString().trim();
     }
 
     private static String capitalizeFully(String string) {

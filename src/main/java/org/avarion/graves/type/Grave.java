@@ -32,6 +32,7 @@ public class Grave implements InventoryHolder, Serializable {
     private String killerNameDisplay;
     private UUID killerUUID;
     private int experience;
+    private ItemStack[] storedInventoryLayout;
     private boolean protection;
     private long timeAlive;
     private long timeCreation;
@@ -58,6 +59,14 @@ public class Grave implements InventoryHolder, Serializable {
 
     public void setEquipmentMap(Map<EquipmentSlot, ItemStack> equipmentMap) {
         this.equipmentMap = equipmentMap;
+    }
+
+    public ItemStack[] getStoredInventoryLayout() {
+        return storedInventoryLayout;
+    }
+
+    public void setStoredInventoryLayout(ItemStack[] storedInventoryLayout) {
+        this.storedInventoryLayout = storedInventoryLayout;
     }
 
     public List<ItemStack> getInventoryItemStack() {

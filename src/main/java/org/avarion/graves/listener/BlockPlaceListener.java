@@ -22,8 +22,7 @@ public class BlockPlaceListener implements Listener {
         Block block = event.getBlock();
         Grave grave = plugin.getBlockManager().getGraveFromBlock(block);
 
-        if (grave != null || (plugin.getRecipeManager() != null && plugin.getRecipeManager()
-                                                                         .isToken(event.getItemInHand()))) {
+        if (grave != null) {
             event.setCancelled(true);
         }
     }

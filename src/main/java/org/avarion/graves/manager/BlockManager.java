@@ -47,67 +47,24 @@ public final class BlockManager {
         location = LocationUtil.roundLocation(location);
 
         if (location.getWorld() != null) {
-            Material material;
+            location.add(0, 0, 0);
 
-            if (plugin.getConfigBool("block.enabled", grave)) {
-                String materialString = plugin.getConfigString("block.material", grave, "CHEST");
-
-                material = Material.matchMaterial(materialString);
-            }
-            else {
-                material = null;
-            }
-
-            int offsetX = plugin.getConfigInt("block.offset.x", grave);
-            int offsetY = plugin.getConfigInt("block.offset.y", grave);
-            int offsetZ = plugin.getConfigInt("block.offset.z", grave);
-
-            location.add(offsetX, offsetY, offsetZ);
-
-            BlockData blockData = plugin.getCompatibility().setBlockData(location, material, grave, plugin);
+            BlockData blockData = plugin.getCompatibility().setBlockData(location, Material.PLAYER_HEAD, grave, plugin);
 
             plugin.getDataManager().addBlockData(blockData);
 
-            if (plugin.getIntegrationManager().hasMultiPaper()) {
-                plugin.getIntegrationManager().getMultiPaper().notifyBlockCreation(blockData);
-            }
 
-            if (plugin.getIntegrationManager().hasItemsAdder()) {
-                plugin.getIntegrationManager().getItemsAdder().createBlock(location, grave);
-            }
-
-            if (plugin.getIntegrationManager().hasOraxen()) {
-                plugin.getIntegrationManager().getOraxen().createBlock(location, grave);
-            }
-
-            if (material != null) {
-                plugin.debugMessage("Placing grave block for "
-                                    + grave.getUUID()
-                                    + " at "
-                                    + location.getWorld()
-                                              .getName()
-                                    + ", "
-                                    + (location.getBlockX() + 0.5)
-                                    + "x, "
-                                    + (location.getBlockY() + 0.5)
-                                    + "y, "
-                                    + (location.getBlockZ() + 0.5)
-                                    + "z", 1);
-            }
-            else {
-                plugin.debugMessage("Placing access location for "
-                                    + grave.getUUID()
-                                    + " at "
-                                    + location.getWorld()
-                                              .getName()
-                                    + ", "
-                                    + (location.getBlockX() + 0.5)
-                                    + "x, "
-                                    + (location.getBlockY() + 0.5)
-                                    + "y, "
-                                    + (location.getBlockZ() + 0.5)
-                                    + "z", 1);
-            }
+            plugin.debugMessage("Placing grave head for "
+                                + grave.getUUID()
+                                + " at "
+                                + location.getWorld().getName()
+                                + ", "
+                                + (location.getBlockX() + 0.5)
+                                + "x, "
+                                + (location.getBlockY() + 0.5)
+                                + "y, "
+                                + (location.getBlockZ() + 0.5)
+                                + "z", 1);
         }
     }
 
@@ -140,18 +97,6 @@ public final class BlockManager {
 
     public void removeBlock(@NotNull BlockData blockData) {
         Location location = blockData.location();
-
-        if (plugin.getIntegrationManager().hasItemsAdder() && plugin.getIntegrationManager()
-                                                                    .getItemsAdder()
-                                                                    .isCustomBlock(location)) {
-            plugin.getIntegrationManager().getItemsAdder().removeBlock(location);
-        }
-
-        if (plugin.getIntegrationManager().hasOraxen() && plugin.getIntegrationManager()
-                                                                .getOraxen()
-                                                                .isCustomBlock(location)) {
-            plugin.getIntegrationManager().getOraxen().removeBlock(location);
-        }
 
         if (location.getWorld() != null) {
             if (blockData.replaceMaterial() != null) {

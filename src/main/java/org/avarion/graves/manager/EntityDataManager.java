@@ -26,10 +26,6 @@ public class EntityDataManager {
         EntityData entityData = new EntityData(location.clone(), entityUUID, graveUUID, type);
 
         plugin.getDataManager().addEntityData(entityData);
-
-        if (plugin.getIntegrationManager().hasMultiPaper()) {
-            plugin.getIntegrationManager().getMultiPaper().notifyEntityCreation(entityData);
-        }
     }
 
     public EntityData getEntityData(Location location, UUID uuid) {

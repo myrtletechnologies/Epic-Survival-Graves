@@ -6,7 +6,7 @@
 
     <groupId>org.avarion</groupId>
     <artifactId>graves</artifactId>
-    <name>ecc-graves-custom</name>
+    <name>ecc-graves</name>
     <description>Full featured lightweight death chest plugin.</description>
     <version>${revision}</version>
 
@@ -22,7 +22,7 @@
     </developers>
 
     <properties>
-        <revision>4.9.11-custom-build-1</revision>
+        <revision>4.9.11-build-6</revision>
         <java.version>17</java.version>
         <maven.compiler.source>${java.version}</maven.compiler.source>
         <maven.compiler.target>${java.version}</maven.compiler.target>
@@ -56,14 +56,6 @@
                 <version>3.6.1</version>
                 <configuration>
                     <relocations>
-                        <relocation>
-                            <pattern>org.bstats</pattern>
-                            <shadedPattern>${project.groupId}.${project.artifactId}.bstats</shadedPattern>
-                        </relocation>
-                        <relocation>
-                            <pattern>com.github.puregero.multilib</pattern>
-                            <shadedPattern>${project.groupId}.${project.artifactId}.multilib</shadedPattern>
-                        </relocation>
                         <relocation>
                             <pattern>de.tr7zw.changeme.nbtapi</pattern>
                             <shadedPattern>${project.groupId}.${project.artifactId}.nbtapi</shadedPattern>
@@ -158,70 +150,8 @@
             <url>https://libraries.minecraft.net/</url>
         </repository>
         <repository>
-            <id>clojars-repo</id>
-            <url>https://repo.clojars.org/</url>
-        </repository>
-        <repository>
-            <id>sonatype-repo</id>
-            <url>https://oss.sonatype.org/content/groups/public/</url>
-        </repository>
-        <repository>
             <id>placeholderapi-repo</id>
             <url>https://repo.extendedclip.com/content/repositories/placeholderapi/</url>
-        </repository>
-<!--
-        <repository>
-            <id>jeff-media-repo</id>
-            <url>https://hub.jeff-media.com/nexus/repository/jeff-media-public/</url>
-        </repository>
--->
-        <repository>
-            <id>skript-repo</id>
-            <url>https://repo.skriptlang.org/releases</url>
-        </repository>
-        <repository>
-            <id>enginehub</id>
-            <url>https://maven.enginehub.org/repo/</url>
-        </repository>
-        <repository>
-            <id>glaremasters-repo</id>
-            <url>https://repo.glaremasters.me/repository/towny/</url>
-        </repository>
-        <repository>
-            <id>minebench-repo</id>
-            <url>https://repo.minebench.de/</url>
-        </repository>
-        <repository>
-            <id>sonatype-oss-snapshots</id>
-            <url>https://oss.sonatype.org/content/repositories/snapshots/</url>
-        </repository>
-        <repository>
-            <id>jitpack.io</id>
-            <url>https://jitpack.io</url>
-        </repository>
-        <repository>
-            <id>oraxen-releases</id>
-            <name>Oraxen Repository</name>
-            <url>https://repo.oraxen.com/releases/</url>
-        </repository>
-        <repository>
-            <id>codemc-repo</id>
-            <url>https://repo.codemc.io/repository/maven-public/</url>
-            <layout>default</layout>
-        </repository>
-        <repository>
-            <id>playpro-repo</id>
-            <url>https://maven.playpro.com</url>
-        </repository>
-<!--
-        <repository>
-            <id>jeff-media-public</id>
-            <url>https://repo.jeff-media.com/public/</url>
-        </repository>
--->
-        <repository>
-            <id>local-repo</id>
-            <url>file://${project.basedir}/lib</url>
         </repository>
     </repositories>
 
@@ -233,76 +163,10 @@
             <scope>provided</scope>
         </dependency>
         <dependency>
-            <groupId>org.bstats</groupId>
-            <artifactId>bstats-bukkit</artifactId>
-            <version>3.1.0</version>
-            <scope>compile</scope>
-        </dependency>
-        <dependency>
-            <groupId>com.github.puregero</groupId>
-            <artifactId>multilib</artifactId>
-            <version>1.2.5</version>
-            <scope>compile</scope>
-        </dependency>
-        <dependency>
             <groupId>com.mojang</groupId>
             <artifactId>authlib</artifactId>
             <version>1.5.25</version>
 <!--            <version>7.0.61</version>-->
-            <scope>provided</scope>
-        </dependency>
-        <dependency>
-            <groupId>dev.sergiferry</groupId>
-            <artifactId>playernpc</artifactId>
-            <version>2022.9</version>
-            <scope>provided</scope>
-        </dependency>
-        <dependency>
-            <groupId>com.mira</groupId>
-            <artifactId>furnitureengine</artifactId>
-            <version>1.6.3</version>
-            <scope>provided</scope>
-        </dependency>
-        <dependency>
-            <groupId>net.milkbowl</groupId>
-            <artifactId>vault</artifactId>
-            <version>1.7.3</version>
-            <scope>provided</scope>
-        </dependency>
-        <dependency>
-            <groupId>me.lokka30</groupId>
-            <artifactId>treasury</artifactId>
-            <version>1.2.0</version>
-            <scope>provided</scope>
-        </dependency>
-        <dependency>
-            <groupId>net.dmulloy2</groupId>
-            <artifactId>ProtocolLib</artifactId>
-            <version>5.4.0</version>
-            <scope>provided</scope>
-        </dependency>
-        <dependency>
-            <groupId>com.sk89q.worldedit</groupId>
-            <artifactId>worldedit-bukkit</artifactId>
-            <version>7.3.18</version>
-            <scope>provided</scope>
-        </dependency>
-        <dependency>
-            <groupId>com.sk89q.worldguard</groupId>
-            <artifactId>worldguard-bukkit</artifactId>
-            <version>7.0.14</version>
-            <scope>provided</scope>
-        </dependency>
-        <dependency>
-            <groupId>com.palmergames.bukkit.towny</groupId>
-            <artifactId>towny</artifactId>
-            <version>0.102.0.2</version>
-            <scope>provided</scope>
-        </dependency>
-        <dependency>
-            <groupId>de.jeff_media</groupId>
-            <artifactId>ChestSortAPI</artifactId>
-            <version>13.0.0-SNAPSHOT</version>
             <scope>provided</scope>
         </dependency>
         <dependency>
@@ -311,100 +175,5 @@
             <version>2.11.7</version>
             <scope>provided</scope>
         </dependency>
-        <dependency>
-            <groupId>com.github.SkriptLang</groupId>
-            <artifactId>Skript</artifactId>
-            <version>2.13.2</version>
-            <scope>provided</scope>
-        </dependency>
-        <dependency>
-            <groupId>com.github.xerial</groupId>
-            <artifactId>sqlite-jdbc</artifactId>
-            <version>3.45.2.0</version>
-            <scope>provided</scope>
-        </dependency>
-        <dependency>
-            <groupId>com.github.Ste3et</groupId>
-            <artifactId>FurnitureLib</artifactId>
-            <version>v3.2.8</version>
-            <scope>provided</scope>
-        </dependency>
-        <dependency>
-            <groupId>com.github.LoneDev6</groupId>
-            <artifactId>api-itemsadder</artifactId>
-            <version>3.6.1</version>
-            <scope>provided</scope>
-        </dependency>
-        <dependency>
-            <groupId>io.th0rgal</groupId>
-            <artifactId>oraxen</artifactId>
-            <version>1.200.0</version>
-            <exclusions>
-                <exclusion>
-                    <groupId>me.gabytm.util</groupId>
-                    <artifactId>actions-spigot</artifactId>
-                </exclusion>
-                <exclusion>
-                    <groupId>com.ticxo</groupId>
-                    <artifactId>PlayerAnimator</artifactId>
-                </exclusion>
-            </exclusions>
-            <scope>provided</scope>
-        </dependency>
-        <dependency>
-            <groupId>com.github.jojodmo</groupId>
-            <artifactId>ItemBridge</artifactId>
-            <version>b0054538c1</version>
-            <scope>provided</scope>
-        </dependency>
-        <dependency>
-            <groupId>net.kyori</groupId>
-            <artifactId>adventure-text-minimessage</artifactId>
-            <version>4.26.1</version>
-            <scope>provided</scope>
-        </dependency>
-        <dependency>
-            <groupId>net.kyori</groupId>
-            <artifactId>adventure-platform-bukkit</artifactId>
-            <version>4.4.1</version>
-            <scope>provided</scope>
-        </dependency>
-        <dependency>
-            <groupId>de.themoep</groupId>
-            <artifactId>minedown</artifactId>
-            <version>1.7.1-SNAPSHOT</version>
-            <scope>provided</scope>
-        </dependency>
-        <dependency>
-            <groupId>org.jetbrains</groupId>
-            <artifactId>annotations</artifactId>
-            <version>26.0.2-1</version>
-            <scope>provided</scope>
-        </dependency>
-        <dependency>
-            <groupId>de.tr7zw</groupId>
-            <artifactId>item-nbt-api-plugin</artifactId>
-            <version>2.15.5</version>
-        </dependency>
-        <dependency>
-            <groupId>net.coreprotect</groupId>
-            <artifactId>coreprotect</artifactId>
-            <version>23.1</version>
-            <scope>provided</scope>
-        </dependency>
-        <dependency>
-            <groupId>com.github.Xyness</groupId>
-            <artifactId>SimpleClaimSystem</artifactId>
-            <version>1.12.3.2</version>
-            <scope>provided</scope>
-        </dependency>
     </dependencies>
-
-    <distributionManagement>
-        <repository>
-            <id>github</id>
-            <name>GitHub Packages</name>
-            <url>https://maven.pkg.github.com/AvarionMC/graves</url>
-        </repository>
-    </distributionManagement>
 </project>
